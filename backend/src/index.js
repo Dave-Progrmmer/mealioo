@@ -16,6 +16,19 @@ app.use(cors());
 app.use(morgan("dev"));
 app.use(express.json());
 
+// Database Connection Middleware (Ensures connection before processing requests)
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    res.status(503).json({
+      message: "Service Unavailable: Database connection failed",
+      error: err.message,
+    });
+  }
+});
+
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/posts", postRoutes);
@@ -37,8 +50,5 @@ if (process.env.NODE_ENV !== "test") {
     console.log(`Server is running on port ${PORT}`);
   });
 }
-
-
-
 
 export default app;
