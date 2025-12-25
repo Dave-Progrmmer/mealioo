@@ -1,7 +1,7 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 
-const API_URL = 'http://localhost:5001/api';
+const API_URL = 'https://mealioo.vercel.app/api';
 
 const api = axios.create({
   baseURL: API_URL,

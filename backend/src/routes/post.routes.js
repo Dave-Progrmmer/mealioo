@@ -1,7 +1,7 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const postController = require("../controllers/post.controller");
-const auth = require("../middleware/auth.middleware");
+import * as postController from "../controllers/post.controller.js";
+import auth from "../middleware/auth.middleware.js";
 
 // @route   POST /api/posts
 // @desc    Create a post
@@ -18,4 +18,4 @@ router.get("/", postController.getPosts);
 // @access  Private
 router.post("/favorite/:id", auth, postController.toggleFavorite);
 
-module.exports = router;
+export default router;

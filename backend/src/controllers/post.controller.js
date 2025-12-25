@@ -1,7 +1,7 @@
-const Post = require("../models/post.model");
-const User = require("../models/user.model");
+import Post from "../models/post.model.js";
+import User from "../models/user.model.js";
 
-exports.createPost = async (req, res) => {
+export const createPost = async (req, res) => {
   try {
     const { title, content, image, category, ingredients, instructions } =
       req.body;
@@ -23,7 +23,7 @@ exports.createPost = async (req, res) => {
   }
 };
 
-exports.getPosts = async (req, res) => {
+export const getPosts = async (req, res) => {
   try {
     const posts = await Post.find()
       .populate("author", "name email")
@@ -35,7 +35,7 @@ exports.getPosts = async (req, res) => {
   }
 };
 
-exports.toggleFavorite = async (req, res) => {
+export const toggleFavorite = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
     const postId = req.params.id;
