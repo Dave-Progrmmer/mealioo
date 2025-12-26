@@ -46,6 +46,7 @@ export default function RegisterScreen() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [dietaryRestrictions, setDietaryRestrictions] = useState<string[]>([]);
   const [favoriteCuisines, setFavoriteCuisines] = useState<string[]>([]);
   const [isPersonalizing, setIsPersonalizing] = useState(false);
@@ -153,7 +154,7 @@ export default function RegisterScreen() {
                 </Text>
                 <TextInput
                   className="bg-gray-50 p-4 rounded-2xl border border-gray-100 text-purple-900"
-                  placeholder="John Doe"
+                  placeholder="Full name"
                   value={name}
                   onChangeText={setName}
                   placeholderTextColor="#9ca3af"
@@ -166,7 +167,7 @@ export default function RegisterScreen() {
                 </Text>
                 <TextInput
                   className="bg-gray-50 p-4 rounded-2xl border border-gray-100 text-purple-900"
-                  placeholder="john@example.com"
+                  placeholder="email@example.com"
                   value={email}
                   onChangeText={setEmail}
                   autoCapitalize="none"
@@ -179,14 +180,25 @@ export default function RegisterScreen() {
                 <Text className="text-sm font-bold text-purple-900 mb-2 ml-1">
                   Password
                 </Text>
-                <TextInput
-                  className="bg-gray-50 p-4 rounded-2xl border border-gray-100 text-purple-900"
-                  placeholder="Minimum 6 characters"
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry
-                  placeholderTextColor="#9ca3af"
-                />
+                <View className="bg-gray-50 flex-row items-center p-4 rounded-2xl border border-gray-100">
+                  <TextInput
+                    className="flex-1 text-purple-900"
+                    placeholder="Minimum 6 characters"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry={!showPassword}
+                    placeholderTextColor="#9ca3af"
+                  />
+                  <TouchableOpacity
+                    onPress={() => setShowPassword(!showPassword)}
+                  >
+                    <Ionicons
+                      name={showPassword ? "eye-off-outline" : "eye-outline"}
+                      size={20}
+                      color="#6b21a8"
+                    />
+                  </TouchableOpacity>
+                </View>
               </View>
 
               <TouchableOpacity

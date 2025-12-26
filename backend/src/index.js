@@ -8,6 +8,7 @@ dotenv.config();
 
 import authRoutes from "./routes/auth.routes.js";
 import postRoutes from "./routes/post.routes.js";
+import mealPlanRoutes from "./routes/mealPlan.routes.js";
 
 const app = express();
 
@@ -32,6 +33,7 @@ app.use(async (req, res, next) => {
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/posts", postRoutes);
+app.use("/api/mealplans", mealPlanRoutes);
 
 app.get("/", (req, res) => {
   res.json({ message: "Mealio API is running" });
