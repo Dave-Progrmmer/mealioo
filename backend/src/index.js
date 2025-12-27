@@ -12,7 +12,6 @@ import postRoutes from "./routes/post.routes.js";
 import mealPlanRoutes from "./routes/mealPlan.routes.js";
 import calorieRoutes from "./routes/calorie.routes.js";
 import userRoutes from "./routes/user.routes.js";
-import communityFoodRoutes from "./routes/communityFood.routes.js";
 
 const app = express();
 
@@ -69,7 +68,6 @@ app.use("/api/posts", postRoutes);
 app.use("/api/mealplans", mealPlanRoutes);
 app.use("/api/calories", calorieRoutes);
 app.use("/api/users", userRoutes);
-app.use("/api/community-foods", communityFoodRoutes);
 
 app.get("/", (req, res) => {
   res.json({ message: "Mealio API is running" });

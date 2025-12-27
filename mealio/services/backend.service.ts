@@ -59,10 +59,5 @@ export const backendService = {
     api.put(`/calories/${id}`, data),
   deleteFoodEntry: (id: string) => api.delete(`/calories/${id}`),
 
-  // Community Foods
-  createCommunityFood: (data: any) => api.post('/community-foods', data),
-  getCommunityFoods: () => api.get('/community-foods'),
-  searchCommunityFoods: (query: string) => api.get(`/community-foods/search?query=${query}`),
-  rateCommunityFood: (id: string, rating: number) => api.post(`/community-foods/${id}/rate`, { rating }),
-  commentCommunityFood: (id: string, text: string) => api.post(`/community-foods/${id}/comment`, { text }),
+
 };
