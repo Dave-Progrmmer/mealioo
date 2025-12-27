@@ -30,6 +30,14 @@ const TabsLayout = () => {
         }}
       />
       <Tabs.Screen
+        name="planner"
+        options={{
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="calendar" size={24} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="create"
         options={{
           tabBarIcon: ({ color }) => (

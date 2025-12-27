@@ -1,5 +1,6 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
+import { MealPlan } from '../types/mealPlan';
 
 const API_URL = 'https://mealioo.vercel.app/api';
 
@@ -24,4 +25,22 @@ export const backendService = {
   getPosts: () => api.get('/posts'),
   createPost: (data: any) => api.post('/posts', data),
   toggleFavorite: (id: string) => api.post(`/posts/favorite/${id}`),
+
+  // Meal Plans
+  createMealPlan: (data: Partial<MealPlan>) => api.post('/mealplans', data),
+  getUserMealPlans: (userId: string, startDate?: string, endDate?: string) => {
+    let url = `/mealplans/user/${userId}`;
+    if (startDate && endDate) {
+      url += `?startDate=${startDate}&endDate=${endDate}`;
+    }
+    return api.get(url);
+  },
+  getMealPlanByDate: (userId: string, date: string) => 
+    api.get(`/mealplans/user/${userId}/date/${date}`),
+  getMealPlanById: (id: string) => api.get(`/mealplans/${id}`),
+  updateMealPlan: (id: string, data: Partial<MealPlan>) => 
+    api.put(`/mealplans/${id}`, data),
+  deleteMealPlan: (id: string) => api.delete(`/mealplans/${id}`),
+  completeMealPlan: (id: string) => api.patch(`/mealplans/${id}/complete`),
 };
+
