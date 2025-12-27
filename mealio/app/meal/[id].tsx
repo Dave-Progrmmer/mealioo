@@ -12,6 +12,7 @@ import {
   View,
 } from "react-native";
 import { api } from "../../services/api";
+import { backendService } from "../../services/backend.service";
 import { Meal } from "../../types/meal";
 
 export default function MealDetails() {
@@ -28,7 +29,43 @@ export default function MealDetails() {
 
   const loadMealDetails = async () => {
     try {
-      const data = await api.fetchMealById(id);
+      let data = null;
+      // Check if ID is MongoID regex (24 hex chars) to try backend first
+      if (id && /^[0-9a-fA-F]{24}$/.test(id)) {
+        try {
+          const res = await backendService.getPostById(id);
+          const post = res.data;
+          if (post) {
+            const ingMap: any = {};
+            (post.ingredients || []).forEach((ing: string, i: number) => {
+              if (i < 20) {
+                ingMap[`strIngredient${i + 1}`] = ing;
+                ingMap[`strMeasure${i + 1}`] = "";
+              }
+            });
+
+            data = {
+              idMeal: post._id,
+              strMeal: post.title,
+              strMealThumb:
+                post.image ||
+                "https://images.unsplash.com/photo-1546069901-ba9599a7e63c",
+              strCategory: post.category,
+              strArea: "Community",
+              strInstructions:
+                (post.instructions || []).join("\n") || post.description || "",
+              strYoutube: "",
+              ...ingMap,
+            } as Meal;
+          }
+        } catch (err) {
+          // Ignore, fallback to external API
+        }
+      }
+
+      if (!data) {
+        data = await api.fetchMealById(id);
+      }
       setMeal(data);
     } catch (error) {
       console.error(error);
@@ -49,9 +86,10 @@ export default function MealDetails() {
     return ingredients;
   };
 
-  const parseInstructions = (instructions: string) => {
+  const parseInstructions = (instructions: string | undefined) => {
+    if (!instructions) return [];
     return instructions
-      .split("\r\n")
+      .split(/\r\n|\n/)
       .filter((step) => step.trim().length > 0 && !step.includes("STEP"))
       .map((step) => step.trim().replace(/^\d+\.\s*/, ""));
   };

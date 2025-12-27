@@ -18,4 +18,9 @@ router.get("/", postController.getPosts);
 // @access  Private
 router.post("/favorite/:id", auth, postController.toggleFavorite);
 
+// @route   GET /api/posts/:id
+// @desc    Get post by ID
+// @access  Public
+router.get("/:id", postController.getPostById);
+
 export default router;

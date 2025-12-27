@@ -26,6 +26,7 @@ export const backendService = {
 
   // Posts
   getPosts: (query?: string) => api.get(query ? `/posts?query=${query}` : '/posts'),
+  getPostById: (id: string) => api.get(`/posts/${id}`),
   createPost: (data: any) => api.post('/posts', data),
   toggleFavorite: (id: string) => api.post(`/posts/favorite/${id}`),
 
