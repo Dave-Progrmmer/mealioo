@@ -3,11 +3,19 @@ import User from "../models/user.model.js";
 
 export const createPost = async (req, res) => {
   try {
-    const { title, content, image, category, ingredients, instructions } =
-      req.body;
+    const {
+      title,
+      desc,
+      description,
+      content,
+      image,
+      category,
+      ingredients,
+      instructions,
+    } = req.body;
     const newPost = new Post({
       title,
-      content,
+      description: desc || description || content,
       image,
       category,
       ingredients,

@@ -786,9 +786,11 @@ export default function CaloriesScreen() {
                             {product.foodName}
                           </Text>
                           <Text className="text-gray-500 text-xs">
-                            {product.brand
-                              ? product.brand
-                              : `${product.calories} cal`}
+                            {product.isCommunity
+                              ? `⭐ ${product.averageRating?.toFixed(1) || "0.0"} • ${product.brand || "Community"}`
+                              : product.brand
+                                ? product.brand
+                                : `${product.calories} cal`}
                           </Text>
                         </View>
 
