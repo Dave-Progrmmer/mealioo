@@ -47,4 +47,8 @@ export interface ScannedProduct {
   fiber: number;
   sugar: number;
   sodium: number;
+  isCommunity?: boolean;
+  _id?: string;
+  ratings?: any[];
+  averageRating?: number;
 }

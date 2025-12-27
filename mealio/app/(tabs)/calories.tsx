@@ -35,10 +35,15 @@ const MEAL_ICONS: Record<MealType, string> = {
 };
 
 export default function CaloriesScreen() {
-  const { user } = useAuth();
+  const { user, setUser } = useAuth(); // Get setUser to update context
   const router = useRouter();
-  const [permission, requestPermission] = useCameraPermissions();
+  const [hasPermission, requestPermission] = useCameraPermissions();
   const [selectedDate, setSelectedDate] = useState(new Date());
+
+  // Goal State
+  const [calorieGoal, setCalorieGoal] = useState(2000);
+  const [showGoalModal, setShowGoalModal] = useState(false);
+  const [newGoal, setNewGoal] = useState("");
   const [dailyData, setDailyData] = useState<DailyNutrition | null>(null);
   const [loading, setLoading] = useState(true);
   const [showScanner, setShowScanner] = useState(false);
@@ -55,10 +60,14 @@ export default function CaloriesScreen() {
     null
   );
   const [scanningBarcode, setScanningBarcode] = useState(false);
-  const [calorieGoal] = useState(2000);
+  // Removed duplicate calorieGoal declaration
   const [addingFoodId, setAddingFoodId] = useState<string | null>(null);
 
   useEffect(() => {
+    if (user?.calorieGoal) {
+      setCalorieGoal(user.calorieGoal);
+    }
+
     if (user?.id || user?._id) {
       loadDailyData();
     } else {
@@ -124,12 +133,56 @@ export default function CaloriesScreen() {
     }
   };
 
+  const handleUpdateGoal = async () => {
+    const goal = parseInt(newGoal);
+    if (isNaN(goal) || goal <= 0) {
+      Alert.alert("Invalid Goal", "Please enter a valid calorie amount.");
+      return;
+    }
+
+    try {
+      const res = await backendService.updateProfile({ calorieGoal: goal });
+      // Update local state and global user context
+      setCalorieGoal(goal);
+      setUser({ ...user, calorieGoal: goal });
+      setShowGoalModal(false);
+      Alert.alert("Success", "Daily calorie goal updated!");
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Error", "Failed to update calorie goal.");
+    }
+  };
+
   const searchFoods = async () => {
     if (!searchQuery.trim()) return;
     setSearching(true);
     try {
-      const res = await backendService.searchFood(searchQuery);
-      setSearchResults(res.data || []);
+      const [offRes, commRes] = await Promise.all([
+        backendService.searchFood(searchQuery),
+        backendService.searchCommunityFoods(searchQuery),
+      ]);
+
+      const offProducts = (offRes.data || []).filter(
+        (p: any) => p.foodName !== "Unknown Product"
+      );
+
+      const commProducts = (commRes.data || []).map((f: any) => ({
+        barcode: f._id,
+        foodName: f.name,
+        brand: f.brand || "Community",
+        calories: f.calories,
+        protein: f.protein,
+        carbs: f.carbs,
+        fat: f.fat,
+        servingSize: f.servingSize,
+        servingUnit: f.servingUnit,
+        imageUrl: f.imageUrl,
+        isCommunity: true,
+        _id: f._id,
+        averageRating: f.averageRating,
+      }));
+
+      setSearchResults([...commProducts, ...offProducts]);
     } catch (error) {
       console.error(error);
       setSearchResults([]);
@@ -331,9 +384,22 @@ export default function CaloriesScreen() {
               </View>
               <View className="items-end">
                 <Text className="text-white/70 text-sm">Goal</Text>
-                <Text className="text-white text-xl font-semibold">
-                  {calorieGoal}
-                </Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    setNewGoal(calorieGoal.toString());
+                    setShowGoalModal(true);
+                  }}
+                  className="flex-row items-center"
+                >
+                  <Text className="text-white text-xl font-semibold mr-1">
+                    {calorieGoal}
+                  </Text>
+                  <Ionicons
+                    name="pencil-outline"
+                    size={14}
+                    color="rgba(255,255,255,0.7)"
+                  />
+                </TouchableOpacity>
               </View>
             </View>
 
@@ -390,7 +456,7 @@ export default function CaloriesScreen() {
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => {
-                if (!permission?.granted) {
+                if (!hasPermission?.granted) {
                   requestPermission();
                 } else {
                   setShowScanner(true);
@@ -687,59 +753,85 @@ export default function CaloriesScreen() {
                     className="mt-10"
                   />
                 ) : searchResults.length > 0 ? (
-                  searchResults.map((product, index) => (
+                  <>
+                    {searchResults.map((product, index) => (
+                      <TouchableOpacity
+                        key={product.barcode || index}
+                        onPress={() => addSearchedFood(product)}
+                        className="bg-white rounded-xl p-3 mb-2 flex-row items-center border border-gray-100"
+                        disabled={
+                          addingFoodId === (product.barcode || product.foodName)
+                        }
+                      >
+                        {product.imageUrl ? (
+                          <Image
+                            source={{ uri: product.imageUrl }}
+                            className="w-14 h-14 rounded-lg mr-3"
+                          />
+                        ) : (
+                          <View className="w-14 h-14 rounded-lg mr-3 bg-gray-100 items-center justify-center">
+                            <Ionicons
+                              name="fast-food"
+                              size={24}
+                              color="#9CA3AF"
+                            />
+                          </View>
+                        )}
+
+                        <View className="flex-1">
+                          <Text
+                            className="text-gray-900 font-medium"
+                            numberOfLines={1}
+                          >
+                            {product.foodName}
+                          </Text>
+                          <Text className="text-gray-500 text-xs">
+                            {product.brand
+                              ? product.brand
+                              : `${product.calories} cal`}
+                          </Text>
+                        </View>
+
+                        <View className="items-end mr-2">
+                          <Text className="text-purple-700 font-bold">
+                            {product.calories}
+                          </Text>
+                          <Text className="text-xs text-gray-400">kcal</Text>
+                        </View>
+
+                        {addingFoodId ===
+                        (product.barcode || product.foodName) ? (
+                          <ActivityIndicator size="small" color="#6b21a8" />
+                        ) : (
+                          <Ionicons
+                            name="add-circle"
+                            size={24}
+                            color="#6b21a8"
+                          />
+                        )}
+                      </TouchableOpacity>
+                    ))}
+
                     <TouchableOpacity
-                      key={product.barcode || index}
-                      onPress={() => addSearchedFood(product)}
-                      className="bg-white rounded-xl p-3 mb-2 flex-row items-center border border-gray-100"
-                      disabled={
-                        addingFoodId === (product.barcode || product.foodName)
+                      className="bg-purple-50 p-4 rounded-xl mt-4 mb-8 flex-row items-center justify-center border border-purple-100"
+                      // onPress -> open create modal (not implemented yet)
+                      onPress={() =>
+                        Alert.alert(
+                          "Coming Soon",
+                          "Create Food feature is implemented on backend, UI coming next step."
+                        )
                       }
                     >
-                      {product.imageUrl ? (
-                        <Image
-                          source={{ uri: product.imageUrl }}
-                          className="w-14 h-14 rounded-lg mr-3"
-                        />
-                      ) : (
-                        <View className="w-14 h-14 rounded-lg mr-3 bg-gray-100 items-center justify-center">
-                          <Ionicons
-                            name="fast-food"
-                            size={24}
-                            color="#9CA3AF"
-                          />
-                        </View>
-                      )}
-
-                      <View className="flex-1">
-                        <Text
-                          className="text-gray-900 font-medium"
-                          numberOfLines={1}
-                        >
-                          {product.foodName}
-                        </Text>
-                        <Text className="text-gray-500 text-xs">
-                          {product.brand
-                            ? product.brand
-                            : `${product.calories} cal`}
-                        </Text>
-                      </View>
-
-                      <View className="items-end mr-2">
-                        <Text className="text-purple-700 font-bold">
-                          {product.calories}
-                        </Text>
-                        <Text className="text-xs text-gray-400">kcal</Text>
-                      </View>
-
-                      {addingFoodId ===
-                      (product.barcode || product.foodName) ? (
-                        <ActivityIndicator size="small" color="#6b21a8" />
-                      ) : (
-                        <Ionicons name="add-circle" size={24} color="#6b21a8" />
-                      )}
+                      <Ionicons
+                        name="add-circle-outline"
+                        size={24}
+                        color="#6b21a8"
+                      />
+                      <Text className="text-purple-700 font-bold ml-2">
+                        Create New Food
+                      </Text>
                     </TouchableOpacity>
-                  ))
+                  </>
                 ) : searchQuery.length > 0 ? (
                   <View className="items-center mt-10">
                     <Ionicons name="search-outline" size={60} color="#E5E7EB" />
@@ -761,6 +853,43 @@ export default function CaloriesScreen() {
             </View>
           )}
         </SafeAreaView>
+      </Modal>
+
+      {/* Edit Goal Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={showGoalModal}
+        onRequestClose={() => setShowGoalModal(false)}
+      >
+        <View className="flex-1 bg-black/50 justify-center items-center px-5">
+          <View className="bg-white p-6 rounded-2xl w-full max-w-sm">
+            <Text className="text-xl font-bold mb-4 text-center">
+              Set Daily Calorie Goal
+            </Text>
+            <TextInput
+              className="border border-gray-300 rounded-lg p-3 text-lg mb-4 text-center"
+              value={newGoal}
+              onChangeText={setNewGoal}
+              keyboardType="numeric"
+              autoFocus
+            />
+            <View className="flex-row gap-3">
+              <TouchableOpacity
+                onPress={() => setShowGoalModal(false)}
+                className="flex-1 bg-gray-200 p-3 rounded-xl items-center"
+              >
+                <Text className="font-semibold text-gray-700">Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleUpdateGoal}
+                className="flex-1 bg-purple-700 p-3 rounded-xl items-center"
+              >
+                <Text className="font-semibold text-white">Save</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
       </Modal>
     </SafeAreaView>
   );
