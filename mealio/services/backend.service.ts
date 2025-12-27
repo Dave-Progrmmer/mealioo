@@ -1,6 +1,7 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { MealPlan } from '../types/mealPlan';
+import { FoodEntry } from '../types/calorie';
 
 const API_URL = 'https://mealioo.vercel.app/api';
 
@@ -42,5 +43,15 @@ export const backendService = {
     api.put(`/mealplans/${id}`, data),
   deleteMealPlan: (id: string) => api.delete(`/mealplans/${id}`),
   completeMealPlan: (id: string) => api.patch(`/mealplans/${id}/complete`),
-};
 
+  // Calorie Tracking
+  addFoodEntry: (data: Partial<FoodEntry>) => api.post('/calories', data),
+  getFoodEntriesByDate: (userId: string, date: string) => 
+    api.get(`/calories/user/${userId}/date/${date}`),
+  getFoodEntriesSummary: (userId: string, startDate: string, endDate: string) =>
+    api.get(`/calories/user/${userId}/summary?startDate=${startDate}&endDate=${endDate}`),
+  searchByBarcode: (barcode: string) => api.get(`/calories/barcode/${barcode}`),
+  updateFoodEntry: (id: string, data: Partial<FoodEntry>) => 
+    api.put(`/calories/${id}`, data),
+  deleteFoodEntry: (id: string) => api.delete(`/calories/${id}`),
+};

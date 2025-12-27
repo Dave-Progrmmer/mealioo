@@ -38,6 +38,14 @@ const TabsLayout = () => {
         }}
       />
       <Tabs.Screen
+        name="calories"
+        options={{
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="nutrition" size={24} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="create"
         options={{
           tabBarIcon: ({ color }) => (
