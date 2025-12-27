@@ -11,6 +11,7 @@ import authRoutes from "./routes/auth.routes.js";
 import postRoutes from "./routes/post.routes.js";
 import mealPlanRoutes from "./routes/mealPlan.routes.js";
 import calorieRoutes from "./routes/calorie.routes.js";
+import userRoutes from "./routes/user.routes.js";
 
 const app = express();
 
@@ -66,6 +67,7 @@ app.use("/api/auth", authLimiter, authRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/mealplans", mealPlanRoutes);
 app.use("/api/calories", calorieRoutes);
+app.use("/api/users", userRoutes);
 
 app.get("/", (req, res) => {
   res.json({ message: "Mealio API is running" });

@@ -22,6 +22,7 @@ export const backendService = {
   // Auth
   login: (data: any) => api.post('/auth/login', data),
   register: (data: any) => api.post('/auth/register', data),
+  updateProfile: (data: any) => api.put('/users/profile', data),
 
   // Posts
   getPosts: () => api.get('/posts'),
