@@ -56,10 +56,30 @@ export default function SearchModal() {
   const performSearch = async () => {
     setLoading(true);
     try {
-      const data = await api.fetchMealsByName(searchQuery);
-      setResults(data || []);
+      const [apiRes, backendRes] = await Promise.all([
+        api.fetchMealsByName(searchQuery),
+        backendService.getPosts(searchQuery),
+      ]);
+
+      const apiMeals = apiRes || [];
+      const userMeals = (backendRes.data || []).map((post: any) => ({
+        idMeal: post._id,
+        strMeal: post.title,
+        strMealThumb:
+          post.image ||
+          "https://images.unsplash.com/photo-1546069901-ba9599a7e63c",
+        strCategory: post.category,
+        strArea: "Community",
+        strInstructions:
+          post.instructions?.join("\n") || post.description || "",
+        strYoutube: "",
+        strTags: null,
+      }));
+
+      setResults([...userMeals, ...apiMeals]);
     } catch (error) {
       console.error(error);
+      setResults([]);
     } finally {
       setLoading(false);
     }

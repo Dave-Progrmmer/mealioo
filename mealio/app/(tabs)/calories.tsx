@@ -157,32 +157,8 @@ export default function CaloriesScreen() {
     if (!searchQuery.trim()) return;
     setSearching(true);
     try {
-      const [offRes, commRes] = await Promise.all([
-        backendService.searchFood(searchQuery),
-        backendService.searchCommunityFoods(searchQuery),
-      ]);
-
-      const offProducts = (offRes.data || []).filter(
-        (p: any) => p.foodName !== "Unknown Product"
-      );
-
-      const commProducts = (commRes.data || []).map((f: any) => ({
-        barcode: f._id,
-        foodName: f.name,
-        brand: f.brand || "Community",
-        calories: f.calories,
-        protein: f.protein,
-        carbs: f.carbs,
-        fat: f.fat,
-        servingSize: f.servingSize,
-        servingUnit: f.servingUnit,
-        imageUrl: f.imageUrl,
-        isCommunity: true,
-        _id: f._id,
-        averageRating: f.averageRating,
-      }));
-
-      setSearchResults([...commProducts, ...offProducts]);
+      const res = await backendService.searchFood(searchQuery);
+      setSearchResults(res.data || []);
     } catch (error) {
       console.error(error);
       setSearchResults([]);
@@ -753,87 +729,59 @@ export default function CaloriesScreen() {
                     className="mt-10"
                   />
                 ) : searchResults.length > 0 ? (
-                  <>
-                    {searchResults.map((product, index) => (
-                      <TouchableOpacity
-                        key={product.barcode || index}
-                        onPress={() => addSearchedFood(product)}
-                        className="bg-white rounded-xl p-3 mb-2 flex-row items-center border border-gray-100"
-                        disabled={
-                          addingFoodId === (product.barcode || product.foodName)
-                        }
-                      >
-                        {product.imageUrl ? (
-                          <Image
-                            source={{ uri: product.imageUrl }}
-                            className="w-14 h-14 rounded-lg mr-3"
-                          />
-                        ) : (
-                          <View className="w-14 h-14 rounded-lg mr-3 bg-gray-100 items-center justify-center">
-                            <Ionicons
-                              name="fast-food"
-                              size={24}
-                              color="#9CA3AF"
-                            />
-                          </View>
-                        )}
-
-                        <View className="flex-1">
-                          <Text
-                            className="text-gray-900 font-medium"
-                            numberOfLines={1}
-                          >
-                            {product.foodName}
-                          </Text>
-                          <Text className="text-gray-500 text-xs">
-                            {product.isCommunity
-                              ? `⭐ ${product.averageRating?.toFixed(1) || "0.0"} • ${product.brand || "Community"}`
-                              : product.brand
-                                ? product.brand
-                                : `${product.calories} cal`}
-                          </Text>
-                        </View>
-
-                        <View className="items-end mr-2">
-                          <Text className="text-purple-700 font-bold">
-                            {product.calories}
-                          </Text>
-                          <Text className="text-xs text-gray-400">kcal</Text>
-                        </View>
-
-                        {addingFoodId ===
-                        (product.barcode || product.foodName) ? (
-                          <ActivityIndicator size="small" color="#6b21a8" />
-                        ) : (
-                          <Ionicons
-                            name="add-circle"
-                            size={24}
-                            color="#6b21a8"
-                          />
-                        )}
-                      </TouchableOpacity>
-                    ))}
-
+                  searchResults.map((product, index) => (
                     <TouchableOpacity
-                      className="bg-purple-50 p-4 rounded-xl mt-4 mb-8 flex-row items-center justify-center border border-purple-100"
-                      // onPress -> open create modal (not implemented yet)
-                      onPress={() =>
-                        Alert.alert(
-                          "Coming Soon",
-                          "Create Food feature is implemented on backend, UI coming next step."
-                        )
+                      key={product.barcode || index}
+                      onPress={() => addSearchedFood(product)}
+                      className="bg-white rounded-xl p-3 mb-2 flex-row items-center border border-gray-100"
+                      disabled={
+                        addingFoodId === (product.barcode || product.foodName)
                       }
                     >
-                      <Ionicons
-                        name="add-circle-outline"
-                        size={24}
-                        color="#6b21a8"
-                      />
-                      <Text className="text-purple-700 font-bold ml-2">
-                        Create New Food
-                      </Text>
+                      {product.imageUrl ? (
+                        <Image
+                          source={{ uri: product.imageUrl }}
+                          className="w-14 h-14 rounded-lg mr-3"
+                        />
+                      ) : (
+                        <View className="w-14 h-14 rounded-lg mr-3 bg-gray-100 items-center justify-center">
+                          <Ionicons
+                            name="fast-food"
+                            size={24}
+                            color="#9CA3AF"
+                          />
+                        </View>
+                      )}
+
+                      <View className="flex-1">
+                        <Text
+                          className="text-gray-900 font-medium"
+                          numberOfLines={1}
+                        >
+                          {product.foodName}
+                        </Text>
+                        <Text className="text-gray-500 text-xs">
+                          {product.brand
+                            ? product.brand
+                            : `${product.calories} cal`}
+                        </Text>
+                      </View>
+
+                      <View className="items-end mr-2">
+                        <Text className="text-purple-700 font-bold">
+                          {product.calories}
+                        </Text>
+                        <Text className="text-xs text-gray-400">kcal</Text>
+                      </View>
+
+                      {addingFoodId ===
+                      (product.barcode || product.foodName) ? (
+                        <ActivityIndicator size="small" color="#6b21a8" />
+                      ) : (
+                        <Ionicons name="add-circle" size={24} color="#6b21a8" />
+                      )}
                     </TouchableOpacity>
-                  </>
+                  ))
                 ) : searchQuery.length > 0 ? (
                   <View className="items-center mt-10">
                     <Ionicons name="search-outline" size={60} color="#E5E7EB" />

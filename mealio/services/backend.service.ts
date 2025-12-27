@@ -25,7 +25,7 @@ export const backendService = {
   updateProfile: (data: any) => api.put('/users/profile', data),
 
   // Posts
-  getPosts: () => api.get('/posts'),
+  getPosts: (query?: string) => api.get(query ? `/posts?query=${query}` : '/posts'),
   createPost: (data: any) => api.post('/posts', data),
   toggleFavorite: (id: string) => api.post(`/posts/favorite/${id}`),
 

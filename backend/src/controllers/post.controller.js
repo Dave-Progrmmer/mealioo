@@ -33,7 +33,20 @@ export const createPost = async (req, res) => {
 
 export const getPosts = async (req, res) => {
   try {
-    const posts = await Post.find()
+    const { query } = req.query;
+    let searchCriteria = {};
+
+    if (query) {
+      searchCriteria = {
+        $or: [
+          { title: { $regex: query, $options: "i" } },
+          { description: { $regex: query, $options: "i" } },
+          { category: { $regex: query, $options: "i" } },
+        ],
+      };
+    }
+
+    const posts = await Post.find(searchCriteria)
       .populate("author", "name email")
       .sort({ createdAt: -1 });
     res.json(posts);
