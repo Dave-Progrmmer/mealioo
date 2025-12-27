@@ -4,7 +4,7 @@ import { MealPlan } from '../types/mealPlan';
 import { FoodEntry } from '../types/calorie';
 
 // Pointing to local backend for testing search feature
-const API_URL = 'https://mealioo.vercel.app/api';
+const API_URL ='https://mealioo.vercel.app/api';
 
 const api = axios.create({
   baseURL: API_URL,

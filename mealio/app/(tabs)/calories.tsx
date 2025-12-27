@@ -439,20 +439,26 @@ export default function CaloriesScreen() {
 
                   {entries.length > 0 ? (
                     entries.map((entry) => (
-                      <TouchableOpacity
+                      <View
                         key={entry._id}
-                        onLongPress={() =>
-                          entry._id && deleteFoodEntry(entry._id)
-                        }
-                        className="bg-white rounded-xl p-3 mb-2 flex-row items-center border border-gray-100"
+                        className="bg-white rounded-xl p-3 mb-2 flex-row items-center border border-gray-100 shadow-sm"
                       >
-                        {entry.imageUrl && (
+                        {entry.imageUrl ? (
                           <Image
                             source={{ uri: entry.imageUrl }}
                             className="w-12 h-12 rounded-lg mr-3"
                           />
+                        ) : (
+                          <View className="w-12 h-12 rounded-lg mr-3 bg-gray-100 items-center justify-center">
+                            <Ionicons
+                              name="fast-food"
+                              size={20}
+                              color="#9CA3AF"
+                            />
+                          </View>
                         )}
-                        <View className="flex-1">
+
+                        <View className="flex-1 mr-2">
                           <Text
                             className="text-gray-900 font-medium"
                             numberOfLines={1}
@@ -465,10 +471,25 @@ export default function CaloriesScreen() {
                             </Text>
                           )}
                         </View>
-                        <Text className="text-purple-700 font-bold">
-                          {entry.calories} cal
-                        </Text>
-                      </TouchableOpacity>
+
+                        <View className="flex-row items-center">
+                          <Text className="text-purple-700 font-bold mr-3">
+                            {entry.calories}
+                          </Text>
+                          <TouchableOpacity
+                            onPress={() =>
+                              entry._id && deleteFoodEntry(entry._id)
+                            }
+                            className="p-2 bg-red-50 rounded-full"
+                          >
+                            <Ionicons
+                              name="trash-outline"
+                              size={18}
+                              color="#EF4444"
+                            />
+                          </TouchableOpacity>
+                        </View>
+                      </View>
                     ))
                   ) : (
                     <TouchableOpacity
