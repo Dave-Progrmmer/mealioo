@@ -17,6 +17,11 @@ router.get("/user/:userId/date/:date", calorieController.getFoodEntriesByDate);
 // @access  Private
 router.get("/user/:userId/summary", calorieController.getFoodEntriesSummary);
 
+// @route   GET /api/calories/search
+// @desc    Search for food by text (Open Food Facts)
+// @access  Private
+router.get("/search", calorieController.searchFood);
+
 // @route   GET /api/calories/barcode/:barcode
 // @desc    Search for food by barcode (Open Food Facts)
 // @access  Private

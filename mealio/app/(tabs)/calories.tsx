@@ -48,7 +48,7 @@ export default function CaloriesScreen() {
 
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<Meal[]>([]);
+  const [searchResults, setSearchResults] = useState<ScannedProduct[]>([]);
   const [searching, setSearching] = useState(false);
 
   const [scannedProduct, setScannedProduct] = useState<ScannedProduct | null>(
@@ -59,7 +59,7 @@ export default function CaloriesScreen() {
   const [addingFoodId, setAddingFoodId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (user?._id) {
+    if (user?.id || user?._id) {
       loadDailyData();
     } else {
       setLoading(false);
@@ -80,11 +80,12 @@ export default function CaloriesScreen() {
   }, [searchQuery]);
 
   const loadDailyData = async () => {
-    if (!user?._id) return;
+    const userId = user.id || user._id;
+    if (!userId) return;
     setLoading(true);
     try {
       const dateStr = selectedDate.toISOString().split("T")[0];
-      const res = await backendService.getFoodEntriesByDate(user._id, dateStr);
+      const res = await backendService.getFoodEntriesByDate(userId, dateStr);
       setDailyData(res.data);
     } catch (error) {
       setDailyData({
@@ -127,45 +128,56 @@ export default function CaloriesScreen() {
     if (!searchQuery.trim()) return;
     setSearching(true);
     try {
-      const data = await api.fetchMealsByName(searchQuery);
-      setSearchResults(data || []);
+      const res = await backendService.searchFood(searchQuery);
+      setSearchResults(res.data || []);
     } catch (error) {
       console.error(error);
+      setSearchResults([]);
     } finally {
       setSearching(false);
     }
   };
 
-  const addFoodFromMeal = async (meal: Meal) => {
-    if (!user?._id) return;
+  const addSearchedFood = async (product: ScannedProduct) => {
+    console.log("Attempting to add food:", product.foodName);
 
-    // Estimate calories based on meal type (since TheMealDB doesn't have nutrition info)
-    const estimatedCalories = 400; // Default estimate
+    const userId = user?.id || user?._id;
+    if (!userId) {
+      Alert.alert(
+        "Debug Error",
+        "User ID is missing. Please sign out and sign in again."
+      );
+      return;
+    }
 
-    setAddingFoodId(meal.idMeal);
+    setAddingFoodId(product.barcode || product.foodName); // Use barcode or name as ID
 
     try {
       await backendService.addFoodEntry({
-        user: user._id,
+        user: userId,
         date: selectedDate.toISOString(),
         mealType: selectedMealType,
-        foodName: meal.strMeal,
-        calories: estimatedCalories,
-        protein: 20,
-        carbs: 40,
-        fat: 15,
-        imageUrl: meal.strMealThumb,
+        foodName: product.foodName,
+        calories: product.calories, // REAL CALORIES!
+        protein: product.protein,
+        carbs: product.carbs,
+        fat: product.fat,
+        fiber: product.fiber,
+        sugar: product.sugar,
+        brand: product.brand,
+        barcode: product.barcode,
+        imageUrl: product.imageUrl,
       });
+
+      console.log("Success!");
 
       // Success feedback
       Alert.alert(
         "Added! 🥗",
-        `${meal.strMeal} has been added to ${selectedMealType}`,
+        `${product.foodName} has been added to ${selectedMealType}`,
         [{ text: "OK" }]
       );
 
-      // Reset state but keep modal open if they want to add more,
-      // OR close it. Let's close it for better UX flow as per usual patterns.
       setShowAddModal(false);
       setSearchQuery("");
       setSearchResults([]);
@@ -173,8 +185,9 @@ export default function CaloriesScreen() {
     } catch (error: any) {
       console.error("Add food error:", error);
       Alert.alert(
-        "Error",
+        "Error Adding Food",
         error?.response?.data?.message ||
+          error?.message ||
           "Failed to add food entry. Please try again."
       );
     } finally {
@@ -183,11 +196,12 @@ export default function CaloriesScreen() {
   };
 
   const addScannedProduct = async () => {
-    if (!user?._id || !scannedProduct) return;
+    const userId = user?.id || user?._id;
+    if (!userId || !scannedProduct) return;
 
     try {
       await backendService.addFoodEntry({
-        user: user._id,
+        user: userId,
         date: selectedDate.toISOString(),
         mealType: selectedMealType,
         foodName: scannedProduct.foodName,
@@ -512,7 +526,12 @@ export default function CaloriesScreen() {
       </Modal>
 
       {/* Add Food Modal */}
-      <Modal visible={showAddModal} animationType="slide">
+      <Modal
+        visible={showAddModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowAddModal(false)}
+      >
         <SafeAreaView className="flex-1 bg-white">
           <View className="px-5 py-4 flex-row items-center justify-between border-b border-gray-100">
             <TouchableOpacity
@@ -647,29 +666,53 @@ export default function CaloriesScreen() {
                     className="mt-10"
                   />
                 ) : searchResults.length > 0 ? (
-                  searchResults.map((meal) => (
+                  searchResults.map((product, index) => (
                     <TouchableOpacity
-                      key={meal.idMeal}
-                      onPress={() => addFoodFromMeal(meal)}
+                      key={product.barcode || index}
+                      onPress={() => addSearchedFood(product)}
                       className="bg-white rounded-xl p-3 mb-2 flex-row items-center border border-gray-100"
-                      disabled={addingFoodId === meal.idMeal}
+                      disabled={
+                        addingFoodId === (product.barcode || product.foodName)
+                      }
                     >
-                      <Image
-                        source={{ uri: `${meal.strMealThumb}/preview` }}
-                        className="w-14 h-14 rounded-lg mr-3"
-                      />
+                      {product.imageUrl ? (
+                        <Image
+                          source={{ uri: product.imageUrl }}
+                          className="w-14 h-14 rounded-lg mr-3"
+                        />
+                      ) : (
+                        <View className="w-14 h-14 rounded-lg mr-3 bg-gray-100 items-center justify-center">
+                          <Ionicons
+                            name="fast-food"
+                            size={24}
+                            color="#9CA3AF"
+                          />
+                        </View>
+                      )}
+
                       <View className="flex-1">
                         <Text
                           className="text-gray-900 font-medium"
                           numberOfLines={1}
                         >
-                          {meal.strMeal}
+                          {product.foodName}
                         </Text>
                         <Text className="text-gray-500 text-xs">
-                          {meal.strCategory}
+                          {product.brand
+                            ? product.brand
+                            : `${product.calories} cal`}
                         </Text>
                       </View>
-                      {addingFoodId === meal.idMeal ? (
+
+                      <View className="items-end mr-2">
+                        <Text className="text-purple-700 font-bold">
+                          {product.calories}
+                        </Text>
+                        <Text className="text-xs text-gray-400">kcal</Text>
+                      </View>
+
+                      {addingFoodId ===
+                      (product.barcode || product.foodName) ? (
                         <ActivityIndicator size="small" color="#6b21a8" />
                       ) : (
                         <Ionicons name="add-circle" size={24} color="#6b21a8" />

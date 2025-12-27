@@ -3,6 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 import { MealPlan } from '../types/mealPlan';
 import { FoodEntry } from '../types/calorie';
 
+// Pointing to local backend for testing search feature
 const API_URL = 'https://mealioo.vercel.app/api';
 
 const api = axios.create({
@@ -51,6 +52,7 @@ export const backendService = {
   getFoodEntriesSummary: (userId: string, startDate: string, endDate: string) =>
     api.get(`/calories/user/${userId}/summary?startDate=${startDate}&endDate=${endDate}`),
   searchByBarcode: (barcode: string) => api.get(`/calories/barcode/${barcode}`),
+  searchFood: (query: string) => api.get(`/calories/search?query=${query}`),
   updateFoodEntry: (id: string, data: Partial<FoodEntry>) => 
     api.put(`/calories/${id}`, data),
   deleteFoodEntry: (id: string) => api.delete(`/calories/${id}`),

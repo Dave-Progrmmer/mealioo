@@ -1,4 +1,5 @@
 import FoodEntry from "../models/foodEntry.model.js";
+import mongoose from "mongoose";
 
 // @desc    Add a food entry
 // @route   POST /api/calories
@@ -187,6 +188,64 @@ export const searchByBarcode = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       message: "Error searching for product",
+      error: error.message,
+    });
+  }
+};
+
+// @desc    Search for food by text query (uses Open Food Facts API)
+// @route   GET /api/calories/search?query=text
+// @access  Private
+export const searchFood = async (req, res) => {
+  try {
+    const { query } = req.query;
+    if (!query) {
+      return res.status(400).json({ message: "Search query is required" });
+    }
+
+    // Using Open Food Facts Search API
+    const response = await fetch(
+      `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(
+        query
+      )}&search_simple=1&action=process&json=1&page_size=20`
+    );
+    const data = await response.json();
+
+    if (!data.products) {
+      return res.json([]);
+    }
+
+    const products = data.products.map((product) => {
+      const nutriments = product.nutriments || {};
+      return {
+        barcode: product.code,
+        foodName: product.product_name || "Unknown Product",
+        brand: product.brands || null,
+        imageUrl: product.image_url || product.image_small_url || null,
+        servingSize: product.serving_quantity || 100,
+        servingUnit: product.serving_size || "g",
+        calories: Math.round(
+          nutriments["energy-kcal_100g"] || nutriments["energy-kcal"] || 0
+        ),
+        protein: Math.round(nutriments.proteins_100g || 0),
+        carbs: Math.round(nutriments.carbohydrates_100g || 0),
+        fat: Math.round(nutriments.fat_100g || 0),
+        fiber: Math.round(nutriments.fiber_100g || 0),
+        sugar: Math.round(nutriments.sugars_100g || 0),
+        sodium: Math.round(nutriments.sodium_100g || 0),
+      };
+    });
+
+    // Filter out products with 0 calories if desired, but some might legitimately be 0.
+    // Let's filter out ones with NO name.
+    const validProducts = products.filter(
+      (p) => p.foodName !== "Unknown Product"
+    );
+
+    res.status(200).json(validProducts);
+  } catch (error) {
+    res.status(500).json({
+      message: "Error searching for food",
       error: error.message,
     });
   }
